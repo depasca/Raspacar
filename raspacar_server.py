@@ -4,12 +4,13 @@ import sys
 import socket
 import time
 from adafruit_motorkit import MotorKit
+import cam_streamer
 
 hostname = socket.gethostname()
 HOST = socket.gethostbyname(hostname)
-
 PORT = 11111    # Port to listen on (non-privileged ports are > 1023)
 DEBUG = False
+
 
 class CarController:
     def __init__(self):
@@ -22,14 +23,14 @@ class CarController:
     def setSpeedXY(self, vx, vy):
         ret = 'OK:'
         pass
-    
+
     def setSpeedRT(self, rho, theta):
         ret = 'OK:'
         if theta > 0 and theta < pi:
             ret = self.setSpeetLeft(rho)
             ret = self.setSpeedRight(rho*(1-2*theta/pi))
         else:
-            theta = math.abs(theta%pi)
+            theta = math.abs(theta % pi)
             ret = self.setSpeetRight(rho)
             ret = self.setSpeedLeft(rho*(1-2*theta/pi))
         return ret
@@ -84,11 +85,11 @@ class CarController:
             elif motor == 'bdx':
                 self.mBDx.throttle = value
             else:
-                ret = 'WARNING: motor ' + motor + 'not found' 
+                ret = 'WARNING: motor ' + motor + 'not found'
         except Exception as e:
-            ret = 'ERROR: ' + motor + ': ' + str(e) 
+            ret = 'ERROR: ' + motor + ': ' + str(e)
         return ret
-        
+
     def setAllMotorThrottle(self, value):
         ret = 'OK:'
         print(str(value))
@@ -96,15 +97,20 @@ class CarController:
         try:
             self.mFSx.throttle = self.mFDx.throttle = self.mBSx.throttle = self.mBDx.throttle = value
         except Exception as e:
-            ret = 'ERROR: ' + motor + ': ' + str(e) 
+            ret = 'ERROR: ' + motor + ': ' + str(e)
         return ret
 
-if len(sys.argv)> 1 and sys.argv[1] == '--debug':
+
+if len(sys.argv) > 1 and sys.argv[1] == '--debug':
     print('debug mode')
     DEBUG = True
 else:
     print('working mode')
 
+# start the camera streaming server
+cam_streamer.start_camera_server()
+
+# start the socket server to receive commands
 cc = CarController()
 while True:
     try:
@@ -125,15 +131,16 @@ while True:
                 print('received ' + cmd)
                 words = cmd.split(':')
                 print(words)
-                #motor:fsx:0.5
+                # motor:fsx:0.5
                 if words[0] == 'motor':
                     resp = cc.setMotorThrottle(words[1], float(words[2]))
                     conn.sendall(bytes(resp + ' - ' + cmd, 'utf8'))
                 elif words[0] == 'allmotors':
                     resp = cc.setAllMotorThrottle(float(words[2]))
-                #rhotheta:0.8:3.14214
+                # rhotheta:0.8:3.14214
                 elif words[0] == 'rhotheta':
-                    resp = cc.setSpeedRhoTheta(float(words[1]), float(words[2]))
+                    resp = cc.setSpeedRhoTheta(
+                        float(words[1]), float(words[2]))
                     conn.sendall(bytes(resp + ' - ' + cmd, 'utf8'))
                 elif words[0] == 'move':
                     resp = cc.move(float(words[1]))
@@ -145,10 +152,9 @@ while True:
                     resp = cc.stop()
                     conn.sendall(bytes(resp + ' - ' + cmd, 'utf8'))
                 else:
-                    conn.sendall(bytes('NO ACTION' + ' - ' + cmd,'utf8'))
+                    conn.sendall(bytes('NO ACTION' + ' - ' + cmd, 'utf8'))
 
     except:
         print('closing socket')
-        sock.close() 
+        sock.close()
         time.sleep(5)
-
