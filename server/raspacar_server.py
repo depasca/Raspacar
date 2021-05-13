@@ -4,7 +4,7 @@ import sys
 import socket
 import time
 import cam_streamer
-from .car_controller import CarController
+from car_controller import CarController
 
 hostname = socket.gethostname()
 HOST = socket.gethostbyname(hostname)
