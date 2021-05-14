@@ -34,8 +34,7 @@ def pyglet_thread():
 
 
 class Container:
-
-    def main(self):
+    def run(self, ip_address):
         self.check_versions()
         sys.excepthook = cef.ExceptHook  # To shutdown all CEF processes on error
 
@@ -44,7 +43,7 @@ class Container:
 
         cef.Initialize()
         cef.CreateBrowserSync(
-            url="http://192.168.178.46:8000", window_title="Robot")
+            url=ip_address + ":8000", window_title="Raspacar")
         cef.MessageLoop()
 
     def check_versions(self):
@@ -64,6 +63,9 @@ class Container:
 
 
 if __name__ == '__main__':
-    c = Container()
-    c.main()
-    c.close()
+    if(len(sys.argv) != 2):
+        print("\n\tUsage: " + sys.argv[0] + " <IP address of your Raspacar>")
+    else:
+        c = Container()
+        c.run(sys.argv[1])
+        c.close()
