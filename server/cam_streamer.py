@@ -114,6 +114,7 @@ def start_camera_server():
         try:
             address = ('', 8000)
             server = StreamingServer(address, StreamingHandler, output)
+            print('streming video on port 8000')
             server.serve_forever()
         finally:
             camera.stop_recording()
