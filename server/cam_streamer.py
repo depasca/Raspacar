@@ -8,7 +8,7 @@ import io
 import picamera
 import logging
 import socketserver
-from threading import Condition
+from threading import Condition, Thread
 from http import server
 
 PAGE = """\
@@ -19,7 +19,9 @@ PAGE = """\
 <body bgcolor="#111111">
 <center><h1><font color="white">Raspacar</font></h1></center>
 <center><img src="stream.mjpg" width="640" height="480"></center>
-<center><button type="button" onmousedown="turnRight()" onmouseup="stop()">turn right</button></center>
+<!-- 
+    <center><button type="button" onmousedown="turnRight()" onmouseup="stop()">turn right</button></center> 
+-->
 
 <script>
 function rutnRight(){
@@ -105,19 +107,29 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
         super().__init__(address, handler)
 
 
-def start_camera_server():
-    with picamera.PiCamera(resolution='640x480', framerate=24) as camera:
-        output = StreamingOutput()
-        # Uncomment the next line to change your Pi's Camera rotation (in degrees)
-        camera.rotation = 180
-        camera.start_recording(output, format='mjpeg')
-        try:
-            address = ('', 8000)
-            server = StreamingServer(address, StreamingHandler, output)
-            server.serve_forever()
-        finally:
-            camera.stop_recording()
+class CameraWrapper():
+    def __init__(self):
+        self._running = True
+
+    def terminate(self):
+        self._running = False
+
+    def run(self):
+        with picamera.PiCamera(resolution='640x480', framerate=24) as camera:
+            output = StreamingOutput()
+            # Uncomment the next line to change your Pi's Camera rotation (in degrees)
+            camera.rotation = 180
+            camera.start_recording(output, format='mjpeg')
+            try:
+                address = ('', 8000)
+                server = StreamingServer(address, StreamingHandler, output)
+                server.serve_forever()
+            finally:
+                camera.stop_recording()
 
 
 if __name__ == '__main__':
-    start_camera_server()
+    camera = CameraWrapper()
+    camera_thread = Thread(target=camera.run)
+    camera_thread.start()
+    print("CamServer Thread started successfully")
