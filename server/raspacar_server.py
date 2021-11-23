@@ -3,26 +3,39 @@
 import sys
 import socket
 import time
+import threading
+import logging
 import cam_streamer
 from car_controller import CarController
 
 hostname = socket.gethostname()
-HOST = socket.gethostbyname(hostname)
+HOST = socket.gethostbyname(hostname + ".local")
 PORT = 11111    # Port to listen on (non-privileged ports are > 1023)
 DEBUG = False
 
 
+def dbgprint(msg):
+    if DEBUG:
+        print(msg)
+
+
 if len(sys.argv) > 1 and sys.argv[1] == '--debug':
-    print('debug mode')
+    logging.info('debug mode')
     DEBUG = True
 else:
-    print('working mode')
+    logging.info('working mode')
 
 # start the camera streaming server
-cam_streamer.start_camera_server()
+camera = cam_streamer.CameraWrapper()
+camera_thread = threading.Thread(target=camera.run)
+camera_thread.start()
+logging.info("Cam streamer started")
+print("Cam streamer started")
 
 # start the socket server to receive commands
 cc = CarController()
+logging.info("Car controller started")
+print("Car controller started")
 while True:
     try:
         print('opening socket')
@@ -39,9 +52,9 @@ while True:
                 if not data:
                     break
                 cmd = data.decode('utf8')
-                print('received ' + cmd)
+                dbgprint('received ' + cmd)
                 words = cmd.split(':')
-                print(words)
+                dbgprint(words)
                 # motor:fsx:0.5
                 if words[0] == 'motor':
                     resp = cc.setMotorThrottle(words[1], float(words[2]))

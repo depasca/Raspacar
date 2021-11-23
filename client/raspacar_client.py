@@ -28,7 +28,7 @@ def pyglet_thread():
     if joysticks:
         joystick = joysticks[0]
         joystick.open()
-        my_controller = JoyHandler()
+        my_controller = JoyHandler(HOST, PORT)
         joystick.push_handlers(my_controller)
         pyglet.app.run()
 

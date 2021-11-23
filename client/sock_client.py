@@ -1,9 +1,10 @@
 import socket
 import threading
+import sys
 
 
 def dbgprint(*msg):
-    if DEBUG:
+    if 1:
         print(msg)
     else:
         pass
@@ -39,7 +40,7 @@ class SockClient:
             self.connecting = True
             dbgprint('connect start')
             x = threading.Thread(target=self.connect_thread,
-                                 args=(HOST, PORT), daemon=True)
+                                 args=(self.HOST, self.PORT), daemon=True)
             x.start()
             x.join()
             dbgprint('connect end')

@@ -2,7 +2,7 @@ from sock_client import SockClient
 
 
 def dbgprint(*msg):
-    if DEBUG:
+    if 1:
         print(msg)
     else:
         pass
