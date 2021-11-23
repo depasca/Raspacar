@@ -2,7 +2,8 @@ from adafruit_motorkit import MotorKit
 
 
 class CarController:
-    def __init__(self):
+    def __init__(self, debug):
+        self.debugMode = debug
         self.kit = MotorKit()
         self.mFSx = self.kit.motor2
         self.mBSx = self.kit.motor1
@@ -62,7 +63,7 @@ class CarController:
 
     def setMotorThrottle(self, motor, value):
         ret = 'OK:'
-        if DEBUG:
+        if self.debugMode:
             return ret
         try:
             if motor == 'fsx':
@@ -81,10 +82,11 @@ class CarController:
 
     def setAllMotorThrottle(self, value):
         ret = 'OK:'
-        print(str(value))
-        return ret
+        if self.debugMode:
+            print(str(value))
+            return ret
         try:
             self.mFSx.throttle = self.mFDx.throttle = self.mBSx.throttle = self.mBDx.throttle = value
         except Exception as e:
-            ret = 'ERROR: ' + motor + ': ' + str(e)
+            ret = 'ERROR: ' + str(e)
         return ret

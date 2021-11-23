@@ -38,11 +38,11 @@ logging.info("Car controller started")
 print("Car controller started")
 while True:
     try:
-        print('opening socket')
+        logging.info('opening socket')
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind((HOST, PORT))
         sock.listen(5)
-        print('listening on ' + HOST + ':' + str(PORT))
+        logging.info('listening on ' + HOST + ':' + str(PORT))
         reset = False
         while reset == False:
             conn, addr = sock.accept()
