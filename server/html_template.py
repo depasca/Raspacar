@@ -4,20 +4,35 @@ HTML_PAGE = """
 <html>
 <head>
     <title>RPi Car Control</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+        }
+        
+        body {
             background: #000;
             font-family: Arial, sans-serif;
-            overflow: hidden;
         }
+        
         #video {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
-            object-fit: contain;
+            object-fit: cover;
         }
+        
         #joystick {
             position: fixed;
             bottom: 40px;
@@ -28,7 +43,9 @@ HTML_PAGE = """
             border: 2px solid rgba(255,255,255,0.5);
             border-radius: 50%;
             touch-action: none;
+            z-index: 100;
         }
+        
         #stick {
             position: absolute;
             width: 50px;
@@ -40,6 +57,7 @@ HTML_PAGE = """
             top: 50px;
             pointer-events: none;
         }
+        
         #info {
             position: fixed;
             top: 10px;
@@ -49,6 +67,7 @@ HTML_PAGE = """
             padding: 10px;
             border-radius: 5px;
             font-size: 14px;
+            z-index: 100;
         }
     </style>
 </head>
@@ -119,6 +138,7 @@ HTML_PAGE = """
             sendCommand(0, 0);
         }
         
+        // Touch events
         joystick.addEventListener('touchstart', (e) => {
             e.preventDefault();
             isDragging = true;
@@ -138,6 +158,7 @@ HTML_PAGE = """
             resetStick();
         });
         
+        // Mouse events
         joystick.addEventListener('mousedown', (e) => {
             isDragging = true;
             updateStick(e.clientX, e.clientY);
@@ -155,6 +176,11 @@ HTML_PAGE = """
                 resetStick();
             }
         });
+        
+        // Prevent pinch zoom and other gestures
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
+        document.addEventListener('gesturechange', (e) => e.preventDefault());
+        document.addEventListener('gestureend', (e) => e.preventDefault());
     </script>
 </body>
 </html>

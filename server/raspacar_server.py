@@ -6,89 +6,86 @@ Creates WiFi AP and serves video stream + control WebSocket
 from html_template import HTML_PAGE
 from motor_controller import motor_controller
 from cam_streamer import camera_streamer
-from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
-from websockets import ConnectionClosedError
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse, StreamingResponse
+
 import json
-import threading
-import time
-import io
-from PIL import Image
-from fastapi.routing import APIRoute
-from starlette.websockets import WebSocket as StarletteWebSocket
-from starlette.responses import Response
+import asyncio
 
 
 def create_app(config = {}):
-    """Create and configure the Flask app"""
+    """Create and configure the FastAPI app"""
     app = FastAPI()
-    sock = WebSocketRoute(app)
     
     @app.get("/")
     async def root():
         """Serve web control interface"""
-        return HTML_PAGE
+        return HTMLResponse(HTML_PAGE)
     
     @app.get('/video_feed')
-    def video_feed():
+    async def video_feed():
         """MJPEG video stream endpoint"""
-        def generate():
+        async def generate():
             while True:
                 frame = camera_streamer.get_frame()
                 if frame:
                     yield (b'--frame\r\n'
                         b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-                time.sleep(0.033)
+                await asyncio.sleep(0.033)  # ~30 FPS
         
-        return Response(generate(),
-            mimetype='multipart/x-mixed-replace; boundary=frame')
-    @sock.route('/ws')
-    def websocket(ws):
+        return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")
+    
+    @app.websocket("/ws")
+    async def websocket_endpoint(websocket: WebSocket):
         """WebSocket endpoint for control commands"""
+        await websocket.accept()
         print("Client connected via WebSocket")
         try:
             while True:
-                data = ws.receive()
+                data = await websocket.receive_text()
                 if data:
                     try:
                         command = json.loads(data)
                         x = float(command.get('x', 0))
                         y = float(command.get('y', 0))
                         motor_controller.move(x, y)
+                        print(f"Command: x={x:.2f}, y={y:.2f}")
                     except (json.JSONDecodeError, ValueError) as e:
                         print(f"Invalid command: {e}")
+        except WebSocketDisconnect:
+            print("Client disconnected normally")
         except Exception as e:
             print(f"WebSocket error: {e}")
         finally:
             motor_controller.stop()
             print("Client disconnected")
 
-    return app, sock
+    return app
 
-def main():
-    """Main entry point"""
+
+if __name__ == "__main__":
+    import uvicorn
+
     print("\n" + "="*50)
     print("Raspberry Pi Car WiFi Server")
     print("="*50)
-    
+
+    app = create_app()
+
+    # Start camera
+    camera_streamer.start()
+
+    print("\n✓ Server ready!")
+    print(f"📱 Connect to WiFi: 'RPi-Car'")
+    print(f"🌐 Open browser: http://192.168.4.1:5000")
+    print("\nPress Ctrl+C to stop\n")
+
     try:
-        app = create_app()
-        
-        # Start camera
-        camera_streamer.start()
-        
-        print("\n✓ Server ready!")
-        print(f"📱 Connect to WiFi: 'RPi-Car'")
-        print(f"🌐 Open browser: http://192.168.4.1:5000")
-        print(f"   (or http://raspberrypi.local:5000)")
-        print("\nPress Ctrl+C to stop\n")
+        uvicorn.run(app, host="0.0.0.0", port=5000)
     except KeyboardInterrupt:
         print("\nShutting down...")
     finally:
         camera_streamer.stop()
         motor_controller.cleanup()
         print("✓ Cleanup complete")
-
-
-if __name__ == "__main__":
-    main()
