@@ -1,84 +1,94 @@
-#!/usr/bin/python3
-
-import sys
-import socket
-import time
+#!/usr/bin/env python3
+"""
+Raspberry Pi Car WiFi Server
+Creates WiFi AP and serves video stream + control WebSocket
+"""
+from html_template import HTML_PAGE
+from motor_controller import motor_controller
+from cam_streamer import camera_streamer
+from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse
+from websockets import ConnectionClosedError
+import json
 import threading
-import logging
-import cam_streamer
-from car_controller import CarController
-
-hostname = socket.gethostname()
-HOST = socket.gethostbyname(hostname + ".local")
-PORT = 11111    # Port to listen on (non-privileged ports are > 1023)
-DEBUG = False
+import time
+import io
+from PIL import Image
+from fastapi.routing import APIRoute
+from starlette.websockets import WebSocket as StarletteWebSocket
+from starlette.responses import Response
 
 
-def dbgprint(msg):
-    if DEBUG:
-        print(msg)
-
-
-if len(sys.argv) > 1 and sys.argv[1] == '--debug':
-    logging.info('debug mode')
-    DEBUG = True
-else:
-    logging.info('working mode')
-
-# start the camera streaming server
-camera = cam_streamer.CameraWrapper()
-camera_thread = threading.Thread(target=camera.run)
-camera_thread.start()
-logging.info("Cam streamer started")
-print("Cam streamer started")
-
-# start the socket server to receive commands
-cc = CarController()
-logging.info("Car controller started")
-print("Car controller started")
-while True:
-    try:
-        logging.info('opening socket')
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind((HOST, PORT))
-        sock.listen(5)
-        logging.info('listening on ' + HOST + ':' + str(PORT))
-        reset = False
-        while reset == False:
-            conn, addr = sock.accept()
-            print('Connected by', addr)
+def create_app(config = {}):
+    """Create and configure the Flask app"""
+    app = FastAPI()
+    sock = WebSocketRoute(app)
+    
+    @app.get("/")
+    async def root():
+        """Serve web control interface"""
+        return HTML_PAGE
+    
+    @app.get('/video_feed')
+    def video_feed():
+        """MJPEG video stream endpoint"""
+        def generate():
             while True:
-                data = conn.recv(1024)
-                if not data:
-                    break
-                cmd = data.decode('utf8')
-                dbgprint('received ' + cmd)
-                words = cmd.split(':')
-                dbgprint(words)
-                # motor:fsx:0.5
-                if words[0] == 'motor':
-                    resp = cc.setMotorThrottle(words[1], float(words[2]))
-                    conn.sendall(bytes(resp + ' - ' + cmd, 'utf8'))
-                elif words[0] == 'allmotors':
-                    resp = cc.setAllMotorThrottle(float(words[2]))
-                # rhotheta:0.8:3.14214
-                elif words[0] == 'rhotheta':
-                    resp = cc.setSpeedRhoTheta(
-                        float(words[1]), float(words[2]))
-                    conn.sendall(bytes(resp + ' - ' + cmd, 'utf8'))
-                elif words[0] == 'move':
-                    resp = cc.move(float(words[1]))
-                    conn.sendall(bytes(resp + ' - ' + cmd, 'utf8'))
-                elif words[0] == 'turn':
-                    resp = cc.turn(float(words[1]))
-                    conn.sendall(bytes(resp + ' - ' + cmd, 'utf8'))
-                elif words[0] == 'stop':
-                    resp = cc.stop()
-                    conn.sendall(bytes(resp + ' - ' + cmd, 'utf8'))
-                else:
-                    conn.sendall(bytes('NO ACTION' + ' - ' + cmd, 'utf8'))
+                frame = camera_streamer.get_frame()
+                if frame:
+                    yield (b'--frame\r\n'
+                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                time.sleep(0.033)
+        
+        return Response(generate(),
+            mimetype='multipart/x-mixed-replace; boundary=frame')
+    @sock.route('/ws')
+    def websocket(ws):
+        """WebSocket endpoint for control commands"""
+        print("Client connected via WebSocket")
+        try:
+            while True:
+                data = ws.receive()
+                if data:
+                    try:
+                        command = json.loads(data)
+                        x = float(command.get('x', 0))
+                        y = float(command.get('y', 0))
+                        motor_controller.move(x, y)
+                    except (json.JSONDecodeError, ValueError) as e:
+                        print(f"Invalid command: {e}")
+        except Exception as e:
+            print(f"WebSocket error: {e}")
+        finally:
+            motor_controller.stop()
+            print("Client disconnected")
 
-    except:
-        print('closing socket')
-        sock.close()
-        time.sleep(5)
+    return app, sock
+
+def main():
+    """Main entry point"""
+    print("\n" + "="*50)
+    print("Raspberry Pi Car WiFi Server")
+    print("="*50)
+    
+    try:
+        app = create_app()
+        
+        # Start camera
+        camera_streamer.start()
+        
+        print("\n✓ Server ready!")
+        print(f"📱 Connect to WiFi: 'RPi-Car'")
+        print(f"🌐 Open browser: http://192.168.4.1:5000")
+        print(f"   (or http://raspberrypi.local:5000)")
+        print("\nPress Ctrl+C to stop\n")
+    except KeyboardInterrupt:
+        print("\nShutting down...")
+    finally:
+        camera_streamer.stop()
+        motor_controller.cleanup()
+        print("✓ Cleanup complete")
+
+
+if __name__ == "__main__":
+    main()
