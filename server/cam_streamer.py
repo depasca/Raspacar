@@ -4,7 +4,8 @@ import threading
 
 # Try to import the real Picamera2; if unavailable provide a minimal stub
 try:
-    from picamera2 import Picamera2, Transform
+    from picamera2 import Picamera2
+    from libcamera import Transform
 except Exception:
     class Picamera2:
         def __init__(self):
@@ -23,6 +24,9 @@ except Exception:
             pass
         def close(self):
             pass
+    class Transform:
+        def __init__(self, hflip=0, vflip=0):
+            pass    
 
 # Import PIL.Image if available, otherwise provide a clearer runtime error if used
 try:
