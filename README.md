@@ -1,4 +1,4 @@
-# 🚗 Raspberry Pi Remote Control Car Server
+# 🚗 Raspberry Pi Remote Control Car Server with Video Streaming
 
 A WiFi-controlled RC car server for Raspberry Pi with live video streaming and real-time motor control. Built with FastAPI and Websockets for low-latency remote operation.
 
