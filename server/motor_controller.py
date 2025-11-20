@@ -60,7 +60,7 @@ class AdafruitMotorController:
                 'front_right': self.kit.motor1,
                 'rear_right': self.kit.motor2,
                 'front_left': self.kit.motor3,
-                'rear_right': self.kit.motor4
+                'rear_left': self.kit.motor4
             }
             
             print("✓ Using Adafruit Motor HAT")
@@ -100,6 +100,10 @@ class AdafruitMotorController:
             motor_name: 'front_left', 'front_right', 'rear_left', 'rear_right'
             speed: -100 (full backward) to 100 (full forward)
         """
+
+        # Motors are wired in reverse
+        speed = -speed
+
         # Clamp speed to valid range
         speed = max(-100, min(100, speed))
         
