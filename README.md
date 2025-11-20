@@ -36,9 +36,9 @@ TBD
 
 ```
 Motor HAT Connections:
-├─ M1: Front Left Motor
-├─ M2: Front Right Motor
-├─ M3: Rear Left Motor
+├─ M1: Front Right Motor
+├─ M2: Rear Right Motor
+├─ M3: Front Left Motor
 ├─ M4: Rear Right Motor
 └─ Power: 6-12V Battery (3A+)
 
@@ -96,7 +96,7 @@ git clone https://github.com/depasca/raspacar.git
 cd raspacar/server
 
 # Run server
-sudo python3 main.py
+sudo python3 raspacar_server.py
 ```
 
 The server will start on `http://0.0.0.0:5000`
@@ -207,7 +207,8 @@ Edit `cam_streamer.py`:
 
 ```python
 config = self.camera.create_preview_configuration(
-    main={"size": (640, 480), "format": "RGB888"}  # Change resolution
+    main={"size": (640, 480), "format": "RGB888"},  # Change resolution
+            transform=Transform(hflip=1, vflip=1)   # if you need to rotate the image
 )
 
 # Adjust frame rate
@@ -216,10 +217,10 @@ time.sleep(0.033)  # ~30 FPS (decrease for higher FPS)
 
 ### Server Port
 
-Edit `main.py` or run with custom port:
+Edit `raspacar_server.py` or run with custom port:
 
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000
+uvicorn raspacar_server:app --host 0.0.0.0 --port 8000
 ```
 
 ## 🐛 Troubleshooting
@@ -235,41 +236,6 @@ sudo i2cdetect -y 1
 
 # Check connections - HAT should be firmly seated
 ```
-
-### Motors Beep But Don't Run
-
-**Issue:** Insufficient power supply
-
-**Solution:** Use a power supply rated for at least 3A. Battery packs under 2A cannot drive 4 motors simultaneously.
-
-### Camera Not Working
-
-```bash
-# Check camera is enabled
-sudo raspi-config
-
-# Test camera
-libcamera-hello
-
-# Check camera connection (CSI cable)
-```
-
-### Cannot Connect from Phone
-
-**Issue:** Network configuration or Android security
-
-**Solution:** 
-1. Ensure phone and Raspberry Pi are on same network
-2. For Android apps, add `android:usesCleartextTraffic="true"` to AndroidManifest.xml
-3. Try accessing web interface first: `http://RASPBERRY_PI_IP:5000`
-
-### Video Stream Lag
-
-**Solutions:**
-- Reduce resolution in `cam_streamer.py`
-- Lower JPEG quality setting
-- Ensure strong WiFi signal
-- Use 5GHz WiFi if available
 
 ## 🔋 Power Considerations
 
@@ -309,8 +275,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter)
-
+Paolo De Pascalis 
 Project Link: [https://github.com/depasca/raspacar](https://github.com/depasca/raspacar)
 
 ---
