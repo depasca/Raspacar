@@ -4,7 +4,7 @@ import threading
 
 # Try to import the real Picamera2; if unavailable provide a minimal stub
 try:
-    from picamera2 import Picamera2
+    from picamera2 import Picamera2, Transform
 except Exception:
     class Picamera2:
         def __init__(self):
@@ -45,7 +45,8 @@ class CameraStreamer:
         
         # Configure camera
         config = self.camera.create_preview_configuration(
-            main={"size": (640, 480), "format": "RGB888"}
+            main={"size": (640, 480), "format": "RGB888"},
+            transform=Transform(hflip=1, vflip=1)
         )
         self.camera.configure(config)
         print("✓ Camera configured")
@@ -53,6 +54,7 @@ class CameraStreamer:
     def start(self):
         """Start camera capture"""
         self.running = True
+        self.camera.rotate = 180
         self.camera.start()
         time.sleep(2)  # Camera warm-up
         
