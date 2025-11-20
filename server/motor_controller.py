@@ -135,9 +135,6 @@ class AdafruitMotorController:
         pwm_channel = channels['pwm']
         dir_channel = channels['dir']
         
-        # Motors are wired in reverse
-        speed = -speed
-
         # Determine direction
         if speed > 0:
             # Forward
