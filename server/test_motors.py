@@ -9,26 +9,26 @@ print("=" * 50)
 
 try:
     # Test with slower speed (less current draw)
-    print("\nTesting M1 (Front Left) - SLOW...")
-    kit.motor1.throttle = 0.3  # Reduced from 0.5
+    print("\nTesting M1 (Front Left)...")
+    kit.motor1.throttle = 0.8  # Reduced from 0.5
     time.sleep(3)
     kit.motor1.throttle = 0
     time.sleep(2)  # Longer pause between motors
     
-    print("Testing M2 (Front Right) - SLOW...")
-    kit.motor2.throttle = 0.3
+    print("Testing M2 (Front Right)...")
+    kit.motor2.throttle = 0.8
     time.sleep(3)
     kit.motor2.throttle = 0
     time.sleep(2)
     
-    print("Testing M3 (Rear Left) - SLOW...")
-    kit.motor3.throttle = 0.3
+    print("Testing M3 (Rear Left)...")
+    kit.motor3.throttle = 0.8
     time.sleep(3)
     kit.motor3.throttle = 0
     time.sleep(2)
     
-    print("Testing M4 (Rear Right) - SLOW...")
-    kit.motor4.throttle = 0.3
+    print("Testing M4 (Rear Right)...")
+    kit.motor4.throttle = 0.8
     time.sleep(3)
     kit.motor4.throttle = 0
     

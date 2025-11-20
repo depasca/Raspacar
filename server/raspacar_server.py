@@ -66,26 +66,26 @@ def create_app(config = {}):
 
 if __name__ == "__main__":
     import uvicorn
-
+    
     print("\n" + "="*50)
     print("Raspberry Pi Car WiFi Server")
     print("="*50)
-
+    
     app = create_app()
-
+    
     # Start camera
     camera_streamer.start()
-
+    
     print("\n✓ Server ready!")
     print(f"📱 Connect to WiFi: 'RPi-Car'")
     print(f"🌐 Open browser: http://192.168.4.1:5000")
     print("\nPress Ctrl+C to stop\n")
-
+    
     try:
         uvicorn.run(app, host="0.0.0.0", port=5000)
     except KeyboardInterrupt:
         print("\nShutting down...")
     finally:
         camera_streamer.stop()
-        motor_controller.cleanup()
+        #motor_controller.cleanup()
         print("✓ Cleanup complete")
