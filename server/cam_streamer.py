@@ -49,11 +49,8 @@ class CameraStreamer:
         
         # Configure camera
         config = self.camera.create_preview_configuration(
-            { 
-                "size": (640, 480), 
-                "format": "RGB888", 
-                "transform":Transform(hflip=1, vflip=1)
-            }
+            {"size": (640, 480), "format": "RGB888"}, 
+            transform=Transform(hflip=1, vflip=1)
         )
         self.camera.configure(config)
         print("✓ Camera configured")
