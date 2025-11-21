@@ -42,6 +42,9 @@ class CameraStreamer:
     """Handles MJPEG camera streaming"""
     
     def __init__(self):
+        self.init_camera()
+
+    def init_camera(self):
         self.camera = Picamera2()
         self.frame = None
         self.lock = threading.Lock()
@@ -49,7 +52,7 @@ class CameraStreamer:
         
         # Configure camera
         config = self.camera.create_preview_configuration(
-            {"size": (640, 480), "format": "RGB888"}, 
+            main={"size": (640, 480), "format": "RGB888"}, 
             transform=Transform(hflip=1, vflip=1)
         )
         self.camera.configure(config)
@@ -58,7 +61,7 @@ class CameraStreamer:
     def start(self):
         """Start camera capture"""
         if not self.camera:
-            self.__init__()
+            self.init_camera()
             
         self.running = True
         self.camera.rotate = 180
@@ -100,6 +103,6 @@ class CameraStreamer:
         self.running = False
         self.camera.stop()
         self.camera.close()
-
+        self.camera = None
 # Global camera streamer instance
 camera_streamer = CameraStreamer()
