@@ -57,6 +57,9 @@ class CameraStreamer:
     
     def start(self):
         """Start camera capture"""
+        if not self.camera:
+            self.__init__()
+            
         self.running = True
         self.camera.rotate = 180
         self.camera.start()
@@ -98,4 +101,5 @@ class CameraStreamer:
         self.camera.stop()
         self.camera.close()
 
+# Global camera streamer instance
 camera_streamer = CameraStreamer()
