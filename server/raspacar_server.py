@@ -12,7 +12,12 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 
 import json
 import asyncio
+import threading
 
+
+# Track active clients
+active_video_clients = 0
+active_video_clients_lock = threading.Lock()
 
 def create_app(config = {}):
     """Create and configure the FastAPI app"""
@@ -27,13 +32,29 @@ def create_app(config = {}):
     async def video_feed():
         """MJPEG video stream endpoint"""
         async def generate():
-            while True:
-                frame = camera_streamer.get_frame()
-                if frame:
-                    yield (b'--frame\r\n'
-                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-                await asyncio.sleep(0.033)  # ~30 FPS
-        
+            global active_video_clients
+            # Increment client count and start camera if first client
+            with active_video_clients_lock:
+                active_video_clients += 1
+                if active_video_clients == 1:
+                    print("📹 Starting camera (first client connected)")
+                    camera_streamer.start()
+
+            try:
+                while True:
+                    frame = camera_streamer.get_frame()
+                    if frame:
+                        yield (b'--frame\r\n'
+                            b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                    await asyncio.sleep(0.033)  # ~30 FPS
+            finally:
+                # Decrement client count and stop camera if no clients left
+                with active_video_clients_lock:
+                    active_video_clients -= 1
+                    if active_video_clients == 0:
+                        print("📹 Stopping camera (no clients connected)")
+                        camera_streamer.stop()
+
         return StreamingResponse(generate(), media_type="multipart/x-mixed-replace; boundary=frame")
     
     @app.websocket("/ws")
@@ -72,10 +93,7 @@ if __name__ == "__main__":
     print("="*50)
     
     app = create_app()
-    
-    # Start camera
-    camera_streamer.start()
-    
+        
     print("\n✓ Server ready!")
     print(f"📱 Connect to WiFi: 'RPi-Car'")
     print(f"🌐 Open browser: http://192.168.4.1:5000")
@@ -86,6 +104,13 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nShutting down...")
     finally:
-        camera_streamer.stop()
-        #motor_controller.cleanup()
+        # Stop camera if still running
+        if camera_streamer.running:
+            camera_streamer.stop()
+        
+        # Stop motors
+        if motor_controller:
+            motor_controller.cleanup()
+        
         print("✓ Cleanup complete")
+        print("👋 Goodbye!\n")
