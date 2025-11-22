@@ -158,7 +158,7 @@ class AdafruitMotorController:
             y: -1.0 (backward) to 1.0 (forward)
         """
         # Convert to speed percentage
-        forward_speed = y * 100
+        forward_speed = y * -100
         turn_speed = x * 100
         
         # Calculate individual motor speeds using differential steering
