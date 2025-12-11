@@ -6,6 +6,13 @@ A WiFi-controlled RC car server for Raspberry Pi with live video streaming and r
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+
+<img width="980" height="737" alt="Screenshot 2025-12-11 at 10 35 40" src="https://github.com/user-attachments/assets/1f1a5a30-f419-4766-978d-12a09500a45d" />
+<img width="980" height="739" alt="Screenshot 2025-12-11 at 10 35 55" src="https://github.com/user-attachments/assets/9544d3b2-dddd-408a-b3f1-c11853c211d6" />
+
+
+
+
 ## ✨ Features
 
 - 🎥 **Real-time MJPEG Video Streaming** - Smooth 30 FPS camera feed at 640x480
