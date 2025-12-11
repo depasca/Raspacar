@@ -9,7 +9,7 @@ A WiFi-controlled RC car server for Raspberry Pi with live video streaming and r
 
 <img width="980" height="737" alt="Screenshot 2025-12-11 at 10 35 40" src="https://github.com/user-attachments/assets/1f1a5a30-f419-4766-978d-12a09500a45d" />
 <img width="980" height="739" alt="Screenshot 2025-12-11 at 10 35 55" src="https://github.com/user-attachments/assets/9544d3b2-dddd-408a-b3f1-c11853c211d6" />
-
+<img width="765" height="441" alt="Screenshot 2025-12-11 at 14 52 23" src="https://github.com/user-attachments/assets/13b280d7-deda-4c15-af34-689d4828f71a" />
 
 
 
